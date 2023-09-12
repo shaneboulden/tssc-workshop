@@ -1,0 +1,62 @@
+---
+title: Exercise 1
+date: '2023-09-22'
+tags: ['sigstore','cosign','rekor','openshift','acs','containers']
+draft: false
+authors: ['default']
+summary: "In this first exercise we'll sign a container image using Sigstore."
+---
+In this first exercise we'll sign a container image using Sigstore.
+
+## Lab environment
+Navigate to your project and find the `tssc-terminal` container. Create a terminal session within OpenShift:
+
+<Zoom>
+![terminal](/static/images/terminal.png)
+</Zoom>
+
+Inside the terminal session login to quay.io:
+```
+podman login quay.io
+```
+Pull down the test app, and re-tag it.
+```
+podman pull quay.io/smileyfritz/demo-app:v0.1.1
+podman tag quay.io/smileyfritz/demo-app:v0.1.1 quay.io/<your-handle>/demo-app:latest
+```
+
+## Sign the container image
+Firstly, grab the digest for your new image:
+```
+crane digest quay.io/<your-handle>/demo-app:latest
+...
+sha256:63c1117db19d56296150993c4f4eb78d54b386cbf35f4a2116b821e6b34ed53e
+```
+Now sign the container with cosign:
+```
+cosign sign --upload=false quay.io/<your-handle>/demo-app@<digest for your image>
+```
+You'll be presented with a screen to authenticate  Sigstore:
+
+<Zoom>
+![Sigstore auth](/static/images/exercise1/code1.png)
+</Zoom>
+
+Copy the `oauth2.sigstore.dev` link into your browser. You'll be presented with a screen to login:
+
+<Zoom>
+![Sigstore auth 2](/static/images/exercise1/code2.png)
+</Zoom>
+
+Copy the code and paste it back into your OpenShift terminal session. The Sigstore signing action will continue, and the transparency log will be updated.
+
+<Zoom>
+![Sigstore auth 3](/static/images/exercise1/code3.png)
+</Zoom>
+
+Note the tlog entry that is created:
+```
+tlog entry created with index: 35809256
+```
+
+## Inspect the transparency log

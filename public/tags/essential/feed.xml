@@ -1,0 +1,24 @@
+
+  <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+      <title>Sec3d</title>
+      <link>https://stb.id.au/blog</link>
+      <description>Building applications, securing infrastructure and applications, and everything in-between.</description>
+      <language>en-us</language>
+      <managingEditor>dev@stb.id.au (Shane Boulden)</managingEditor>
+      <webMaster>dev@stb.id.au (Shane Boulden)</webMaster>
+      <lastBuildDate>Fri, 23 Dec 2022 00:00:00 GMT</lastBuildDate>
+      <atom:link href="https://stb.id.au/tags/essential/feed.xml" rel="self" type="application/rss+xml"/>
+      
+  <item>
+    <guid>https://stb.id.au/blog/e8-assessment-metrics</guid>
+    <title>Measuring Essential Eight Assessment Activity</title>
+    <link>https://stb.id.au/blog/e8-assessment-metrics</link>
+    <description>In the last article I looked at automating some of the tests available for Windows servers and desktops in the ACSC Essential Eight assessment guide. This article looks at how we can measure assessment activity - how often are we assessing systems, and are they passing the tests?</description>
+    <pubDate>Fri, 23 Dec 2022 00:00:00 GMT</pubDate>
+    <author>dev@stb.id.au (Shane Boulden)</author>
+    <category>essential</category><category>eight</category><category>ansible</category><category>automation</category><category>windows</category><category>e8</category><category>security</category><category>metrics</category><category>assessment</category>
+  </item>
+
+    </channel>
+  </rss>

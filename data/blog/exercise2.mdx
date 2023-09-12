@@ -1,0 +1,28 @@
+---
+title: Exercise 2
+date: '2023-09-22'
+tags: ['sigstore','cosign','tekton','openshift','acs','chains']
+draft: false
+authors: ['default']
+summary: "In the second exercise we'll sign a container image with Tekton Chains."
+---
+In this lab we'll sign a container image with Tekton Chains.
+
+## Lab environment
+Navigate to your project and find the `tssc-terminal` container. Create a terminal session within OpenShift:
+
+<Zoom>
+![terminal](/static/images/terminal.png)
+</Zoom>
+
+Inside the terminal session login to quay.io:
+```
+authfile=auth
+podman login --authfile=$authfile quay.io
+```
+
+## Create the pipeline
+
+## Run the pipeline
+
+## Verify the tlog entry
