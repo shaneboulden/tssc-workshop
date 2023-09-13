@@ -1,0 +1,134 @@
+---
+title: Detecting supply-chain compromise at runtime
+exercise: 4
+date: '2023-09-21'
+tags: ['sigstore','cosign','openshift','acs','chains']
+draft: false
+authors: ['default']
+summary: "In this exercise we'll identify anomalous behaviours in container applications at runtime, that could be indicative of supply-chain compromise."
+---
+In this lab we'll identify anomalous behaviours in container applications at runtime, that could be indicative of supply-chain compromise.
+
+## Cleanup existing policies
+Navigate to the `acs-central` project and `Network -> Routes`. Find the ACS Central route.
+
+<Zoom>
+![acs1](/static/images/exercise4/acs1.png)
+</Zoom>
+
+Log in to ACS Central and select `Platform configuration -> Policy management`. Firstly we need to disable the policy from the last exercise. 
+
+Select the `Cosign verification - <your username>` policy. Select `Actions` and select `Disable policy`.
+
+<Zoom>
+![runtime1](/static/images/exercise4/runtime1.png)
+</Zoom>
+
+## Clone an existing policy
+Navigate back to the list of policies and perform a search for `Policy: crypto`. You should see policies related to `Cryptomining` shown.
+
+<Zoom>
+![runtime2](/static/images/exercise4/runtime2.png)
+</Zoom>
+
+Select the menu next to the `Cryptocurrency Mining Process Execution` policy and select `Clone policy`. You'll be shown a new copy of the policy.
+
+<Zoom>
+![runtime3](/static/images/exercise4/runtime3.png)
+</Zoom>
+
+<Zoom>
+![runtime4](/static/images/exercise4/runtime4.png)
+</Zoom>
+
+Name the new policy `Cryptocurrency Mining Process Execution - <your username>`. Select `Next`, and under `Policy behavior` ensure that `Runtime` is selected. Change the `Response method` from `Inform` to `Inform and Enforce`, and click the switch for `Enforce on Runtime`.
+
+<Zoom>
+![enforce1](/static/images/exercise4/enforce1.png)
+</Zoom>
+
+Select `Next` until you reach `Policy scope`. Select `Add Inclusion Scope` and create an inclusive scope for your individual project.
+
+<Zoom>
+![runtime5](/static/images/exercise4/runtime5.png)
+</Zoom>
+
+Select `Review policy` and `Save`. You should now see the new policy created. If it's disabled, enable the policy.
+
+<Zoom>
+![runtime6](/static/images/exercise4/runtime6.png)
+</Zoom>
+
+## Test out the new runtime policy
+Navigate back to OpenShift and your individual user project. Select the `+` button to create a new deployment in the current namespace (shown in yellow).
+
+<Zoom>
+![ocp1](/static/images/exercise4/ocp1.png)
+</Zoom>
+
+Enter the following YAML to create a new deployment:
+```yaml
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  labels:
+    app: demo-app
+    app.kubernetes.io/component: demo-app
+    app.kubernetes.io/instance: demo-app
+    app.kubernetes.io/name: demo-app
+    app.kubernetes.io/part-of: demo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-app
+  template:
+    metadata:
+      labels:
+        app: demo-app
+    spec:
+      containers:
+        - name: demo-app
+          image: quay.io/smileyfritz/demo-app:v0.1.1
+```
+<Zoom>
+![runtime7](/static/images/exercise4/runtime7.png)
+</Zoom>
+
+Select `Create` and observe that this time the container starts deploying.
+
+<Zoom>
+![deploy1](/static/images/exercise4/deploy1.png)
+</Zoom>
+
+If you select `Pods` you'll see the pod name cycling through, but the container never deploys successfully.
+
+<Zoom>
+![deploy2](/static/images/exercise4/deploy2.png)
+</Zoom>
+
+Navigate back to ACS and select `Violations`. You should see a policy violation for `Cryptocurrency Mining Process Execution - <your username>`.
+
+<Zoom>
+![violation1](/static/images/exercise4/violation1.png)
+</Zoom>
+
+Selecting the violation shows the process that was detected inside the container at runtime.
+
+<Zoom>
+![violation2](/static/images/exercise4/violation2.png)
+</Zoom>
+
+If you select `Enforcement` you can see the action that was taken. In this case, the pod was immediately killed as soon as the cryptominer was detected.
+
+<Zoom>
+![violation3](/static/images/exercise4/violation3.png)
+</Zoom>
+
+## Cleanup
+Navigate back to OpenShift and your username. Delete the `demo-app` deployment in your namespace.
+
+<Zoom>
+![delete1](/static/images/exercise4/delete1.png)
+</Zoom>

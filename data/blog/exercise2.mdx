@@ -1,6 +1,7 @@
 ---
-title: Exercise 2
-date: '2023-09-22'
+title: Integrating container signing into CI/CD pipelines
+exercise: 2
+date: '2023-09-19'
 tags: ['sigstore','cosign','tekton','openshift','acs','chains']
 draft: false
 authors: ['default']
@@ -17,12 +18,130 @@ Navigate to your project and find the `tssc-terminal` container. Create a termin
 
 Inside the terminal session login to quay.io:
 ```
-authfile=auth
-podman login --authfile=$authfile quay.io
+podman login --authfile=auth.json quay.io
+```
+Copy the example image into your own quay.io account:
+```
+podman pull quay.io/smileyfritz/chat-client:latest
+podman tag quay.io/smileyfritz/chat-client:latest quay.io/<your-quay-handle>/chat-client:latest
+```
+Create a new application from the new image:
+```
+oc new-app quay.io/<your-quay-handle>/chat-client:latest
+```
+
+## Create the pipeline secrets
+Create a secret for the registry configuration:
+```
+oc create secret generic regcred --from-file=.dockerconfigjson=auth.json --type=kubernetes.io/dockerconfigjson
+```
+Navigate to ACS and select `Platform configuration -> Integrations`. Scroll to the bottom of the page and find `StackRox API tokens`.
+
+<Zoom>
+![api1](/static/images/exercise2/api1.png)
+</Zoom>
+
+Create a token for your username. For the role, select `Continuous Integration`.
+
+<Zoom>
+![api2](/static/images/exercise2/api2.png)
+</Zoom>
+
+Once complete select `Generate`.
+
+Copy the API token and create a new secret:
+```
+oc create secret generic acstoken --from-literal=token=<your-token-here>
 ```
 
 ## Create the pipeline
+Change into the `pipeline` directory and inspect the resources:
+```
+cd pipeline
+ls -l
+```
+There's a few changes that you need to make to this pipeline configuration. Firstly, open the `pipeline-run-with-scan.yaml` file with one of the available text editors (`vim` or `nano`):
+```
+vim pipeline-run-with-scan.yaml 
+```
+Update the following parameters:
+
+* `image-name`: Update this to reflect your quay.io handle
+* `acs-scan-api`: Update this to the route for ACS, e.g. central-acs-central.apps.vlme6l1rt1709976be.australiasoutheast.aroapp.io
+
+Once you've made these changes, create all the resources in the `pipeline` directory:
+```
+oc create -f .
+```
 
 ## Run the pipeline
+Let's set a few permissions and run the pipeline:
+```
+oc adm policy add-role-to-user isview -z pipeline-svc --role-namespace=<your-project> -n <your-project>
+oc adm policy add-scc-to-user privileged -z pipeline-svc
+```
+Now start the pipeline:
+```
+oc create -f pipeline-run-with-scan.yaml
+```
+You should now be able to navigate to `Pipeline` and see the pipeline running:
 
-## Verify the tlog entry
+<Zoom>
+![pipeline1](/static/images/exercise2/pipeline1.png)
+</Zoom>
+
+## Verify the container signatures and tlog entry
+Login to quay.io and verify that there is a small shield next to the `latest` tag. Hovering over the tag should show "this tag has been signed by cosign".
+
+<Zoom>
+![quay1](/static/images/exercise2/quay1.png)
+</Zoom>
+
+Navigate back to the terminal window and check that you can verify the container image with `cosign`:
+```
+cosign verify --key k8s://openshift-pipelines/signing-secrets quay.io/<your-quay-handle>/chat-client:latest
+```
+If everything ran successfully, you should see that the cosign claims are valid:
+```
+Verification for quay.io/smileyfritz/chat-client:latest --
+The following checks were performed on each of these signatures:
+  - The cosign claims were validated
+  - The claims were present in the transparency log
+  - The signatures were integrated into the transparency log when the certificate was valid
+  - The signatures were verified against the specified public key
+
+[{"critical":{"identity":{"docker-reference":"quay.io/smileyfritz/chat-client"},"image":{"docker-manifest-digest":"sha256:0be008b5cdaafa8b0b600f89f7524e2126c18e92f7c5b6a73aadccd2af413581"},"type":"cosign container image signature"},"optional":null}]
+```
+You can also verify that an attestation has also been created and signed. Firstly, we need the digest of the container image that was just created:
+```
+crane digest quay.io/<your-quay-handle>/chat-client:latest
+sha256:a1a783df5746d9eaa75decb3feb75c4fec8d4b26ccac590642c1daee3ac78fcc
+```
+Now you can perform a search using the `rekor-cli` for this digest:
+```
+rekor-cli search --sha=sha256:a1a783df5746d9eaa75decb3feb75c4fec8d4b26ccac590642c1daee3ac78fcc
+Found matching entries (listed by UUID):
+24296fb24b8ad77a49c0d1ee06c740a6ecb6999b50d8a2133ae305d76b4f71d8a156487e54240f9d
+```
+Finally, grab the attestation that was created by Tekton Chains and take a look at the output:
+```
+rekor-cli get --uuid 24296fb24b8ad77a49c0d1ee06c740a6ecb6999b50d8a2133ae305d76b4f71d8a156487e54240f9d --format json | jq -r .Attestation | jq
+
+{
+  "_type": "https://in-toto.io/Statement/v0.1",
+  "predicateType": "https://slsa.dev/provenance/v0.2",
+  "subject": [
+    {
+      "name": "quay.io/smileyfritz/chat-client",
+      "digest": {
+        "sha256": "a1a783df5746d9eaa75decb3feb75c4fec8d4b26ccac590642c1daee3ac78fcc"
+      }
+    }
+  ],
+  "predicate": {
+    "builder": {
+      "id": "https://tekton.dev/chains/v2"
+    },
+    "buildType": "tekton.dev/v1beta1/TaskRun",
+    ...
+```

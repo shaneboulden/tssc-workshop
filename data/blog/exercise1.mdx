@@ -1,6 +1,7 @@
 ---
-title: Exercise 1
-date: '2023-09-22'
+title: Signing container images with Sigstore
+exercise: 1
+date: '2023-09-18'
 tags: ['sigstore','cosign','rekor','openshift','acs','containers']
 draft: false
 authors: ['default']
@@ -15,11 +16,21 @@ Navigate to your project and find the `tssc-terminal` container. Create a termin
 ![terminal](/static/images/terminal.png)
 </Zoom>
 
-Inside the terminal session login to quay.io:
+Inside the terminal create a new directory `~/.config/containers/`
+```
+bash
+mkdir ~/.config/containers
+```
+Set a few variables to store the container runtime:
+```
+export XDG_RUNTIME_DIR=~/.config
+export REGISTRY_AUTH_FILE=~/.config/containers/auth.json
+```
+Login to quay.io using your personal credentials:
 ```
 podman login quay.io
 ```
-Pull down the test app, and re-tag it.
+Pull down the test app, and re-tag it using your quay.io handle
 ```
 podman pull quay.io/smileyfritz/demo-app:v0.1.1
 podman tag quay.io/smileyfritz/demo-app:v0.1.1 quay.io/<your-handle>/demo-app:latest
@@ -34,7 +45,7 @@ sha256:63c1117db19d56296150993c4f4eb78d54b386cbf35f4a2116b821e6b34ed53e
 ```
 Now sign the container with cosign:
 ```
-cosign sign --upload=false quay.io/<your-handle>/demo-app@<digest for your image>
+cosign sign quay.io/<your-handle>/demo-app@<digest for your image>
 ```
 You'll be presented with a screen to authenticate  Sigstore:
 
@@ -58,5 +69,67 @@ Note the tlog entry that is created:
 ```
 tlog entry created with index: 35809256
 ```
+Navigate to quay.io and access your `demo-app` repository. You should note a small shield icon next to your tag, and if you select `Show signatures` you should be able to see the signature object that's been created.
 
-## Inspect the transparency log
+## Verifying the signature
+We can also use the `cosign` binary to verify container signatures. You can do this knowing the identity that was used to sign the container as well as the certificate issuer:
+```
+cosign verify --certificate-identity shane.boulden@gmail.com --certificate-oidc-issuer https://github.com/login/oauth quay.io/smileyfritz/demo-app:v0.1.1
+
+Verification for quay.io/smileyfritz/demo-app:v0.1.1 --
+The following checks were performed on each of these signatures:
+  - The cosign claims were validated
+  - Existence of the claims in the transparency log was verified offline
+  - The code-signing certificate was verified using trusted certificate authority certificates
+
+[{"critical":{"identity":{"docker-reference":"quay.io/smileyfritz/demo-app"},"image":{"docker-manifest-digest":"sha256:63c1117db19d56296150993c4f4eb78d54b386cbf35f4a2116b821e6b34ed53e"},"type":"cosign container image signature"},"optio
+...
+```
+
+## Inspecting the transparency log
+We can also inspect the information that's been published to the Rekor transparency log, using the `tlog` entry number that was recorded initially. If you don't have one, just sign the image again with `cosign`.
+
+Let's see what the record looks like:
+```json
+rekor-cli get --log-index 35809256
+
+LogID: c0d23d6ad406973f9559f3ba2d1ca01f84147d8ffc5b8445c224f98b9591801d
+Index: 35809256
+IntegratedTime: 2023-09-12T06:03:46Z
+UUID: 24296fb24b8ad77a8b3ac548fc64ce4da8544381d36c2176cf84975da85aa05ee9e92efea91224a7
+Body: {
+  "HashedRekordObj": {
+    "data": {
+      "hash": {
+        "algorithm": "sha256",
+        "value": "628a902b63f6224376503e7169af80a2f03f522734b42e0dd768440b0359bfd0"
+      }
+    },
+    "signature": {
+      "content": "MEUCIAEdOaVgD3xzYiX9yibIU2vr2fAa3dpZzZ6fZAEJOwa7AiEA2204D/Pg91BLRVtqR9t0DQpEivbrxwuJ3zhEjdDvJ3U=",
+      "publicKey": {
+        "content": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUMxekNDQWwyZ0F3SUJBZ0lVVGE0eHh1b1dadjNlcTBVbTQ5Nm9xQmhXeStJd0NnWUlLb1pJemowRUF3TXcKTnpFVk1CTUdBMVVFQ2hNTWMybG5jM1J2Y21VdVpHVjJNUjR3SEFZRFZRUURFeFZ6YVdkemRHOXlaUzFwYm5SbApjbTFsWkdsaGRHVXdIaGNOTWpNd09URXlNRFl3TXpReldoY05Nak13T1RFeU1EWXhNelF6V2pBQU1Ga3dFd1lICktvWkl6ajBDQVFZSUtvWkl6ajBEQVFjRFFnQUV1dG5mRmpHNFZ3MnUxNFBOVjJ4OFQrL1pRUGZNVVhWS0tSMWcKU2RhTml3bzllQ2FMdlNrRk10b2RlRGdjM3JHa2NLV09BbGJOUktKdThvOWFnWFN0MXFPQ0FYd3dnZ0Y0TUE0RwpBMVVkRHdFQi93UUVBd0lIZ0RBVEJnTlZIU1VFRERBS0JnZ3JCZ0VGQlFjREF6QWRCZ05WSFE0RUZnUVVFdmoyClhaOFZQU0R5ZmFtRkIyT0poTlQyMUJvd0h3WURWUjBqQkJnd0ZvQVUzOVBwejFZa0VaYjVxTmpwS0ZXaXhpNFkKWkQ4d0pRWURWUjBSQVFIL0JCc3dHWUVYYzJoaGJtVXVZbTkxYkdSbGJrQm5iV0ZwYkM1amIyMHdMQVlLS3dZQgpCQUdEdnpBQkFRUWVhSFIwY0hNNkx5OW5hWFJvZFdJdVkyOXRMMnh2WjJsdUwyOWhkWFJvTUM0R0Npc0dBUVFCCmc3OHdBUWdFSUF3ZWFIUjBjSE02THk5bmFYUm9kV0l1WTI5dEwyeHZaMmx1TDI5aGRYUm9NSUdMQmdvckJnRUUKQWRaNUFnUUNCSDBFZXdCNUFIY0EzVDB3YXNiSEVUSmpHUjRjbVdjM0FxSktYcmplUEszL2g0cHlnQzhwN280QQpBQUdLaC8wUlFnQUFCQU1BU0RCR0FpRUFreDNqVHJxMXplcFpaQm5wUjlzL1ZDRzcyU2hCVW5nQTVCeitDd21nCnJrUUNJUUNxYnRqaVFkMndxNE5NTmkvOG0ycXVNVlVrQ2tXMDVEVGR3RHIvNDljZTh6QUtCZ2dxaGtqT1BRUUQKQXdOb0FEQmxBakVBay9TZ0pOcmpXc1B3WXl2bTBNNnVMMFQwSVVuVjlPeE1WRDQyTjh0M09wTTNGdUZHR3lyNgpkR2crYVpOQ25zdXRBakEyTGpicjN4UHIrdDloa2VadG9lZFhWM2VJeTJPdmdERnJRbUI1dFFwNEJyajZjZHdOCmRsUXN0b2dHdkdVZ0lqRT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
+      }
+    }
+  }
+}
+```
+Since this is a json document we can extract the information with `jq`. For example, we can look at the certificates that were generated by Cosign and signed by the Fulcio CA:
+```
+rekor-cli get --log-index 35809256 --format json | jq -r '.Body.HashedRekordObj.signature.publicKey.content' | base64 -d | openssl x509 -noout -text
+
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            4d:ae:31:c6:ea:16:66:fd:de:ab:45:26:e3:de:a8:a8:18:56:cb:e2
+        Signature Algorithm: ecdsa-with-SHA384
+        Issuer: O = sigstore.dev, CN = sigstore-intermediate
+        Validity
+            Not Before: Sep 12 06:03:43 2023 GMT
+            Not After : Sep 12 06:13:43 2023 GMT
+        Subject: 
+        Subject Public Key Info:
+            Public Key Algorithm: id-ecPublicKey
+                Public-Key: (256 bit)
+```

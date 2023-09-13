@@ -1,0 +1,133 @@
+---
+title: Blocking unsigned container images with ACS
+exercise: 3
+date: '2023-09-20'
+tags: ['sigstore','cosign','openshift','acs','chains']
+draft: false
+authors: ['default']
+summary: "In the third exercise we'll block unsigned containers from OpenShift"
+---
+In this lab we'll block unsigned container images using the Red Hat Advanced Cluster Security for Kubernetes (ACS) Cosign admission controller integration.
+
+## Create a signature integration
+Navigate to the `acs-central` project and `Network -> Routes`. Find the ACS Central route.
+
+<Zoom>
+![acs1](/static/images/exercise3/acs1.png)
+</Zoom>
+
+Once you're logged in, select `Platform Configuration -> Integrations`, and find the `Signature` integration.
+
+<Zoom>
+![acs2](/static/images/exercise3/acs2.png)
+</Zoom>
+
+Create a new Signature integration named `cosign`.
+
+<Zoom>
+![acs3](/static/images/exercise3/acs3.png)
+</Zoom>
+
+Collect the public key from OpenShift and add it to the Cosign integration
+```
+oc get secret signing-secrets -n openshift-pipelines -o jsonpath='{.data.cosign\.pub}' | base64 --decode
+```
+<Zoom>
+![acs4](/static/images/exercise3/acs4.png)
+</Zoom>
+
+Select save.
+
+## Create a policy
+Select `Platform Configuration -> Policy Management`. Select `Create Policy` to bring up a new policy.
+
+<Zoom>
+![acs5](/static/images/exercise3/acs5.png)
+</Zoom>
+
+Name the new policy `Cosign verification - <your name>`. Give it a severity of `Medium`, and select `Kubernetes` from the Categories. You don't need to add anything for the description, rationale or guidance, but you can complete these sections if you'd like.
+
+<Zoom>
+![acs6](/static/images/exercise3/acs6.png)
+</Zoom>
+
+Select `Next` and select `Deploy` for the lifecycle stage. Select `Inform and enforce` for the Response Method, and select the switch to `Enforce on Deploy`.
+
+<Zoom>
+![acs7](/static/images/exercise3/acs7.png)
+</Zoom>
+
+Select `Next` and drag `Image signature` from the column on the right into the Policy criteria. 
+
+<Zoom>
+![acs8](/static/images/exercise3/acs8.png)
+</Zoom>
+
+Click the `Select` button in the policy and select the Cosign integration that you created earlier. Select `Save`.
+
+<Zoom>
+![acs9](/static/images/exercise3/acs9.png)
+</Zoom>
+
+Select `Next` and under `Restrict by scope` select `Add Inclusion Scope`. Select the available cluster, and enter your user project for the namespace. e.g. if you are user1, enter `user1`.
+
+<Zoom>
+![acs10](/static/images/exercise3/acs10.png)
+</Zoom>
+
+Select `Next`. Review the policy and select `Save`.
+
+<Zoom>
+![acs11](/static/images/exercise3/acs11.png)
+</Zoom>
+
+## Test out the policy
+Navigate back to OpenShift and your project (e.g. `user1`). Click the `+` button (shown in yellow) to create a new deployment.
+
+<Zoom>
+![ocp1](/static/images/exercise3/ocp1.png)
+</Zoom>
+
+Paste the following YAML into the dialog and select `Create`.
+```yaml
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  labels:
+    app: demo-app
+    app.kubernetes.io/component: demo-app
+    app.kubernetes.io/instance: demo-app
+    app.kubernetes.io/name: demo-app
+    app.kubernetes.io/part-of: demo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-app
+  template:
+    metadata:
+      labels:
+        app: demo-app
+    spec:
+      containers:
+        - name: demo-app
+          image: quay.io/smileyfritz/demo-app:v0.1.1
+```
+<Zoom>
+![ocp2](/static/images/exercise3/ocp2.png)
+</Zoom>
+
+Verify that the ACS policy has blocked the new deployment.
+
+<Zoom>
+![ocp3](/static/images/exercise3/ocp3.png)
+</Zoom>
+
+Navigate back to ACS and select `Violations`. Verify that you can now see a new violation has been created for the `Cosign verification - <your username>` policy.
+
+<Zoom>
+![ocp4](/static/images/exercise3/ocp4.png)
+</Zoom>
+
+You can select the Cosign verification violation and see more details about the container image and the actions taken to enforce the policy.
