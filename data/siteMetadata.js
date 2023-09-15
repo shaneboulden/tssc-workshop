@@ -5,7 +5,7 @@ const siteMetadata = {
   description: 'Red Hat Trusted Software Supply-Chain Workshop',
   language: 'en-us',
   siteUrl: 'https://tssc.blueradish.net',
-  siteRepo: 'https://github.com/shaneboulden/blog',
+  siteRepo: 'https://github.com/shaneboulden/tssc-workshop',
   siteLogo: '/static/images/redhat.png',
   image: '/static/images/avatar.png',
   socialBanner: '/static/images/twitter-card.png',

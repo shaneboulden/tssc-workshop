@@ -4,7 +4,7 @@ const projectsData = [
     description: `Who knew that BBQing had so much to do with deploying containers
     to Kubernetes clusters?`,
     imgSrc: '/static/images/google.png',
-    href: '/blog/bbq-and-kubernetes',
+    href: '/workshop/bbq-and-kubernetes',
   },
 ]
 

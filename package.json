@@ -1,5 +1,5 @@
 {
-  "name": "tailwind-nextjs-starter-blog",
+  "name": "tssc-workshop",
   "version": "1.1.0",
   "private": true,
   "scripts": {
@@ -10,7 +10,7 @@
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "next lint --fix --dir pages --dir components --dir lib --dir layouts --dir scripts",
     "prepare": "husky install",
-    "spell": "cspell data/blog/*"
+    "spell": "cspell data/workshop/*"
   },
   "dependencies": {
     "@fontsource/inter": "4.5.2",
