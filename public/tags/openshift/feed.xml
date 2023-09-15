@@ -8,7 +8,7 @@
       <managingEditor>sboulden@redhat.com (Red Hat)</managingEditor>
       <webMaster>sboulden@redhat.com (Red Hat)</webMaster>
       <lastBuildDate>Mon, 18 Sep 2023 00:00:00 GMT</lastBuildDate>
-      <atom:link href="https://tssc.blueradish.net/tags/sigstore/feed.xml" rel="self" type="application/rss+xml"/>
+      <atom:link href="https://tssc.blueradish.net/tags/openshift/feed.xml" rel="self" type="application/rss+xml"/>
       
   <item>
     <guid>https://tssc.blueradish.net/workshop/exercise1</guid>
