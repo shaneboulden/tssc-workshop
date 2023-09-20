@@ -19,7 +19,7 @@ Navigate to your project and find the `tssc-terminal` container. Create a termin
 Inside the terminal create a new directory `~/.config/containers/`
 ```
 bash
-mkdir ~/.config/containers
+mkdir -p ~/.config/containers
 ```
 Set a few variables to store the container runtime:
 ```
@@ -34,6 +34,7 @@ Pull down the test app, and re-tag it using your quay.io handle
 ```
 podman pull quay.io/smileyfritz/demo-app:v0.1.1
 podman tag quay.io/smileyfritz/demo-app:v0.1.1 quay.io/<your-handle>/demo-app:latest
+podman push quay.io/<your-handle>/demo-app:latest
 ```
 
 ## Sign the container image
