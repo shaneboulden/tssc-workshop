@@ -177,9 +177,39 @@ EOF
 #+end_src
 
 
-* Step 3 - Provision user namespaces
+* Step 3 - Provision users and user namespaces
 
-For each user in our workshop we need to provision a ~Namespace~. Each namespace needs to include a helper terminal pod that workshop participants will use for each excercise.
+We need to create a number of users for our workshop, which will authenticate via an [OpenShift htpasswd auth provider](https://docs.openshift.com/container-platform/4.13/authentication/identity_providers/configuring-htpasswd-identity-provider.html). The example below creates a `htpasswd` file for 35 users:
+```
+PASSWORD=ghye4311
+htpasswd -c -B -b users.htpasswd user1 ghye4311 && \
+for i in $(seq 2 35); do htpasswd -B -b users.htpasswd user$i $PASSWORD; done
+```
+One the users are created, you can create a secret in OpenShift holding the `htpasswd` file:
+```
+oc create secret generic htpass-secret --from-file=htpasswd=users.htpasswd -n openshift-config 
+```
+You then need to create an identity provider:
+```
+apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  name: cluster
+spec:
+  identityProviders:
+  - name: workshop_users 
+    mappingMethod: claim 
+    type: HTPasswd
+    htpasswd:
+      fileData:
+        name: htpass-secret 
+```
+Create this file in the cluster:
+```
+$ oc apply -f /path/to/cr.yaml
+```
+
+Additionally, for each user in our workshop we need to provision a ~Namespace~. Each namespace needs to include a helper terminal pod that workshop participants will use for each excercise.
 
 Adjust the number in the script below to the desired user count.
 
