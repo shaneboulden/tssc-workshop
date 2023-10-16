@@ -179,7 +179,7 @@ EOF
 
 * Step 3 - Provision users and user namespaces
 
-We need to create a number of users for our workshop, which will authenticate via an [[OpenShift htpasswd auth provider][https://docs.openshift.com/container-platform/4.13/authentication/identity_providers/configuring-htpasswd-identity-provider.html]]. The example below creates a `htpasswd` file for 35 users:
+We need to create a number of users for our workshop, which will authenticate via an [[https://docs.openshift.com/container-platform/4.13/authentication/identity_providers/configuring-htpasswd-identity-provider.html][OpenShift htpasswd auth provider]]. The example below creates a `htpasswd` file for 35 users:
 
 #+begin_src bash :results silent
 PASSWORD=ghye4311
