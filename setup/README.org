@@ -216,7 +216,7 @@ Create this file in the cluster:
 $ oc apply -f /path/to/cr.yaml
 #+end_src
 
-Additionally, for each user in our workshop we need to provision a ~Namespace~. Each namespace needs to include a helper terminal pod that workshop participants will use for each excercise.
+Additionally, for each user in our workshop we need to provision a ~Namespace~. Each namespace needs to include a helper terminal pod that workshop participants will use for each exercise.
 
 Adjust the number in the script below to the desired user count.
 
@@ -249,4 +249,51 @@ spec:
   source: redhat-operators
   sourceNamespace: openshift-marketplace
 EOF
+#+end_src
+
+* Step 5 - Expose the internal registry
+
+Finally, we need to expose the OpenShift internal registry. In this example I've used a Let's Encrypt certificate to expose the registry at ~registry.blueradish.net~, and you'll find this referenced in the workshop content, though you can create your own registry URL and update this.
+
+Firstly, create the certificates via Certbot. You'll need an AWS IAM role created for Certbot:
+
+#+begin_src bash :results silent
+$ cat ~/.aws/credentials
+[certbot]
+aws_access_key_id=...
+aws_secret_access_key=...
+
+$ virtualenv certbot-venv
+$ source ~/certbot-venv/bin/activate
+$ pip3 install certbot certbot_dns_route53==0.22.2
+
+$ AWS_PROFILE=certbot certbot certonly --logs-dir /home/user/certbot/log --config-dir /home/user/certbot/config --work-dir /home/user/certbot/work -d registry.blueradish.net --dns-route53 -m your-email --agree-tos --non-interactive
+#+end_src
+
+Create a secret from the certbot certificate:
+
+#+begin_src bash :results silent
+$ oc create secret tls public-route-tls \
+    -n openshift-image-registry \
+	  --cert /home/user/certbot/config/live/registry.blueradish.net/fullchain.pem \
+	  --key  /home/user/certbot/config/live/registry.blueradish.net/privkey.pem
+#+end_src
+
+Add the secret and hostname to the registry route:
+
+#+begin_src bash :results silent
+$ oc edit configs.imageregistry.operator.openshift.io/cluster
+...
+spec:
+  routes:
+    - name: public-routes
+      hostname: registry.blueradish.net
+      secretName: public-route-tls
+#+end_src
+
+Create a CNAME record in Route53 pointing to ~registry.blueradish.net~ and the OpenShift router canonical hostname, and test out the registry auth:
+
+#+begin_src bash :results silent
+podman login -u kubeadmin -p $(oc whoami -t) registry.blueradish.net
+Login succeeded!
 #+end_src
