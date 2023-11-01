@@ -4,7 +4,7 @@ kind: Deployment
 metadata:
   name: tssc
   labels:
-    app: tssc-test
+    app: tssc-terminal
     app.kubernetes.io/component: tssc
     app.kubernetes.io/instance: tssc
     app.kubernetes.io/name: tssc
@@ -23,6 +23,6 @@ spec:
       serviceAccount: tssc
       containers:
         - name: demo-app
-          image: quay.io/smileyfritz/tssc-terminal:v0.1.5
+          image: quay.io/smileyfritz/tssc-terminal:v0.1.6
           securityContext:
             privileged: true
