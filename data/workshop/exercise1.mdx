@@ -17,36 +17,35 @@ Navigate to your project and find the `tssc-terminal` container. Create a termin
 </Zoom>
 
 Inside the terminal create a new directory `~/.config/containers/`
-```
-bash
+```bash
 mkdir -p ~/.config/containers
 ```
-Set a few variables to store the container runtime:
-```
+Set a few variables to store the podman configuration:
+```bash
 export XDG_RUNTIME_DIR=~/.config
 export REGISTRY_AUTH_FILE=~/.config/containers/auth.json
 ```
-Login to quay.io using your personal credentials:
+Login to the registry using your lab credentials:
+```bash
+podman login -u ${USER} -p $(oc whoami -t) registry.blueradish.net
 ```
-podman login quay.io
-```
-Pull down the test app, and re-tag it using your quay.io handle
-```
+Pull down the test app, and re-tag it using your Red Hat Quay handle
+```bash
 podman pull quay.io/smileyfritz/demo-app:v0.1.1
-podman tag quay.io/smileyfritz/demo-app:v0.1.1 quay.io/<your-handle>/demo-app:latest
-podman push quay.io/<your-handle>/demo-app:latest
+podman tag quay.io/smileyfritz/demo-app:v0.1.1 registry.blueradish.net/$(oc project -q)/demo-app:v1
+podman push registry.blueradish.net/$(oc project -q)/demo-app:v1
 ```
 
 ## Sign the container image
 Firstly, grab the digest for your new image:
-```
-crane digest quay.io/<your-handle>/demo-app:latest
+```bash
+crane digest registry.blueradish.net/$(oc project -q)/demo-app:v1
 ...
 sha256:63c1117db19d56296150993c4f4eb78d54b386cbf35f4a2116b821e6b34ed53e
 ```
 Now sign the container with cosign:
-```
-cosign sign quay.io/<your-handle>/demo-app@<digest for your image>
+```bash
+cosign sign registry.blueradish.net/$(oc project -q)/demo-app@<digest for your image>
 ```
 You'll be presented with a screen to authenticate  Sigstore:
 
@@ -70,7 +69,15 @@ Note the tlog entry that is created:
 ```
 tlog entry created with index: 35809256
 ```
-Navigate to quay.io and access your `demo-app` repository. You should note a small shield icon next to your tag, and if you select `Show signatures` you should be able to see the signature object that's been created.
+Use `crane` to list the registry contents, and verify that you have a signature created in the registry:
+```bash
+crane ls registry.blueradish.net/$(oc project -q)/demo-app
+```
+You should see a tag and the signature file are now created:
+```
+latest
+sha256-5e350542cb6501b78549701996fc8d22e86d9a8bc51434092d35698d0073b667.sig
+```
 
 ## Verifying the signature
 We can also use the `cosign` binary to verify container signatures. You can do this knowing the identity that was used to sign the container as well as the certificate issuer:
@@ -83,8 +90,12 @@ The following checks were performed on each of these signatures:
   - Existence of the claims in the transparency log was verified offline
   - The code-signing certificate was verified using trusted certificate authority certificates
 
-[{"critical":{"identity":{"docker-reference":"quay.io/smileyfritz/demo-app"},"image":{"docker-manifest-digest":"sha256:63c1117db19d56296150993c4f4eb78d54b386cbf35f4a2116b821e6b34ed53e"},"type":"cosign container image signature"},"optio
+[{"critical":{"identity":{"docker-reference":"quay.io/smileyfritz/demo-app"},"image":{"docker-manifest-digest":"sha256:63c1117db19d56296150993c4f4eb78d54b386cbf35f4a2116b821e6b34ed53e"},"type":"cosign container image signature"},
 ...
+```
+Use the `cosign` binary to verify the signature you created:
+```
+ cosign verify --certificate-identity <your-github-identity> --certificate-oidc-issuer https://github.com/login/oauth registry.blueradish.net/$(oc project -q)/demo-app:v1
 ```
 
 ## Inspecting the transparency log

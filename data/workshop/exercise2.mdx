@@ -16,18 +16,19 @@ Navigate to your project and find the `tssc-terminal` container. Create a termin
 ![terminal](/static/images/terminal.png)
 </Zoom>
 
-Inside the terminal session login to quay.io:
+Inside the terminal session login to the registry:
 ```
-podman login --authfile=auth.json quay.io
+podman login --authfile=auth.json registry.blueradish.net
 ```
 Copy the example image into your own quay.io account:
 ```
 podman pull quay.io/smileyfritz/chat-client:latest
-podman tag quay.io/smileyfritz/chat-client:latest quay.io/<your-quay-handle>/chat-client:latest
+podman tag quay.io/smileyfritz/chat-client:latest registry.blueradish.net/$(oc project -q)/chat-client:latest
+podman push registry.blueradish.net/$(oc project -q)/chat-client:latest
 ```
 Create a new application from the new image:
 ```
-oc new-app quay.io/<your-quay-handle>/chat-client:latest
+oc new-app registry.blueradish.net/$(oc project -q)/chat-client:latest
 ```
 
 ## Create the pipeline secrets
@@ -66,12 +67,13 @@ vim pipeline-run-with-scan.yaml
 ```
 Update the following parameters:
 
-* `image-name`: Update this to reflect your quay.io handle
+* `image-name`: Update this to reflect the internal registry and your current namespace. e.g. `registry.blueradish.net/user1/chat-client:latest`
 * `acs-scan-api`: Update this to the route for ACS, e.g. central-acs-central.apps.vlme6l1rt1709976be.australiasoutheast.aroapp.io
 
-Once you've made these changes, create all the resources in the `pipeline` directory:
+Once you've made these changes, create all the resources in the `pipeline/deploy` directory:
 ```
-oc create -f .
+cd pipeline
+oc create -f deploy/
 ```
 
 ## Run the pipeline
@@ -91,15 +93,11 @@ You should now be able to navigate to `Pipeline` and see the pipeline running:
 </Zoom>
 
 ## Verify the container signatures and tlog entry
-Login to quay.io and verify that there is a small shield next to the `latest` tag. Hovering over the tag should show "this tag has been signed by cosign".
-
-<Zoom>
-![quay1](/static/images/exercise2/quay1.png)
-</Zoom>
+Login to the local registry and 
 
 Navigate back to the terminal window and check that you can verify the container image with `cosign`:
 ```
-cosign verify --key k8s://openshift-pipelines/signing-secrets quay.io/<your-quay-handle>/chat-client:latest
+cosign verify --key k8s://openshift-pipelines/signing-secrets quay.blueradish.net/$(oc project -q)/chat-client:latest
 ```
 If everything ran successfully, you should see that the cosign claims are valid:
 ```
