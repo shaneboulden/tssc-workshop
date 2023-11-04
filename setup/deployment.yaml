@@ -23,6 +23,6 @@ spec:
       serviceAccount: tssc
       containers:
         - name: demo-app
-          image: quay.io/smileyfritz/tssc-terminal:v0.1.6
+          image: quay.io/smileyfritz/tssc-terminal:v0.1.7
           securityContext:
             privileged: true

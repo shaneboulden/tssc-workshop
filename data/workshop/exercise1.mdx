@@ -27,9 +27,13 @@ export REGISTRY_AUTH_FILE=~/.config/containers/auth.json
 ```
 Login to the registry using your lab credentials:
 ```bash
-podman login -u ${USER} -p $(oc whoami -t) registry.blueradish.net
+podman login -u tssc -p $(oc whoami -t) registry.blueradish.net
 ```
-Pull down the test app, and re-tag it using your Red Hat Quay handle
+Set the project for your username:
+```
+oc project userX
+```
+Pull down the test app, and re-tag it using your OpenShift project:
 ```bash
 podman pull quay.io/smileyfritz/demo-app:v0.1.1
 podman tag quay.io/smileyfritz/demo-app:v0.1.1 registry.blueradish.net/$(oc project -q)/demo-app:v1
@@ -75,7 +79,7 @@ crane ls registry.blueradish.net/$(oc project -q)/demo-app
 ```
 You should see a tag and the signature file are now created:
 ```
-latest
+v1
 sha256-5e350542cb6501b78549701996fc8d22e86d9a8bc51434092d35698d0073b667.sig
 ```
 
