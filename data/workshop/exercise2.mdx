@@ -16,12 +16,25 @@ Navigate to your project and find the `tssc-terminal` container. Create a termin
 ![terminal](/static/images/terminal.png)
 </Zoom>
 
-Inside the terminal session login to the registry:
+Inside the terminal create a new directory `~/.config/containers/`
+```bash
+mkdir -p ~/.config/containers
 ```
-podman login --authfile=auth.json registry.blueradish.net
+Set a few variables to store the podman configuration:
+```bash
+export XDG_RUNTIME_DIR=~/.config
+export REGISTRY_AUTH_FILE=~/.config/containers/auth.json
+```
+Login to the registry using your lab credentials:
+```bash
+podman login -u tssc -p $(oc whoami -t) registry.blueradish.net
+```
+Set the project for your username:
+```
+oc project userX
 ```
 Copy the example image into your own quay.io account:
-```
+```bash
 podman pull quay.io/smileyfritz/chat-client:latest
 podman tag quay.io/smileyfritz/chat-client:latest registry.blueradish.net/$(oc project -q)/chat-client:latest
 podman push registry.blueradish.net/$(oc project -q)/chat-client:latest
@@ -30,7 +43,6 @@ Create a new application from the new image:
 ```
 oc new-app registry.blueradish.net/$(oc project -q)/chat-client:latest
 ```
-
 ## Create the pipeline secrets
 Create a secret for the registry configuration:
 ```
@@ -67,7 +79,7 @@ vim pipeline-run-with-scan.yaml
 ```
 Update the following parameters:
 
-* `image-name`: Update this to reflect the internal registry and your current namespace. e.g. `registry.blueradish.net/user1/chat-client:latest`
+* `image-name`: Update this to reflect the internal registry and your current namespace. e.g. `registry.blueradish.net/userX/chat-client:latest`
 * `acs-scan-api`: Update this to the route for ACS, e.g. central-acs-central.apps.vlme6l1rt1709976be.australiasoutheast.aroapp.io
 
 Once you've made these changes, create all the resources in the `pipeline/deploy` directory:
@@ -86,18 +98,16 @@ Now start the pipeline:
 ```
 oc create -f pipeline-run-with-scan.yaml
 ```
-You should now be able to navigate to `Pipeline` and see the pipeline running:
+You should now be able to navigate to `Pipeline` in the OpenShift UI and see the pipeline running:
 
 <Zoom>
 ![pipeline1](/static/images/exercise2/pipeline1.png)
 </Zoom>
 
 ## Verify the container signatures and tlog entry
-Login to the local registry and 
-
 Navigate back to the terminal window and check that you can verify the container image with `cosign`:
 ```
-cosign verify --key k8s://openshift-pipelines/signing-secrets quay.blueradish.net/$(oc project -q)/chat-client:latest
+cosign verify --key k8s://openshift-pipelines/signing-secrets registry.blueradish.net/$(oc project -q)/chat-client:latest
 ```
 If everything ran successfully, you should see that the cosign claims are valid:
 ```
@@ -108,11 +118,11 @@ The following checks were performed on each of these signatures:
   - The signatures were integrated into the transparency log when the certificate was valid
   - The signatures were verified against the specified public key
 
-[{"critical":{"identity":{"docker-reference":"quay.io/smileyfritz/chat-client"},"image":{"docker-manifest-digest":"sha256:0be008b5cdaafa8b0b600f89f7524e2126c18e92f7c5b6a73aadccd2af413581"},"type":"cosign container image signature"},"optional":null}]
+[{"critical":{"identity":{"docker-reference":"registry.blueradish.net/user1/chat-client"},"image":{"docker-manifest-digest":"sha256:0be008b5cdaafa8b0b600f89f7524e2126c18e92f7c5b6a73aadccd2af413581"},"type":"cosign container image signature"},"optional":null}]
 ```
 You can also verify that an attestation has also been created and signed. Firstly, we need the digest of the container image that was just created:
 ```
-crane digest quay.io/<your-quay-handle>/chat-client:latest
+crane digest registry.blueradish.net/$(oc project -q)/chat-client:latest
 sha256:a1a783df5746d9eaa75decb3feb75c4fec8d4b26ccac590642c1daee3ac78fcc
 ```
 Now you can perform a search using the `rekor-cli` for this digest:
@@ -122,7 +132,7 @@ Found matching entries (listed by UUID):
 24296fb24b8ad77a49c0d1ee06c740a6ecb6999b50d8a2133ae305d76b4f71d8a156487e54240f9d
 ```
 Finally, grab the attestation that was created by Tekton Chains and take a look at the output:
-```
+```json
 rekor-cli get --uuid 24296fb24b8ad77a49c0d1ee06c740a6ecb6999b50d8a2133ae305d76b4f71d8a156487e54240f9d --format json | jq -r .Attestation | jq
 
 {
@@ -130,7 +140,7 @@ rekor-cli get --uuid 24296fb24b8ad77a49c0d1ee06c740a6ecb6999b50d8a2133ae305d76b4
   "predicateType": "https://slsa.dev/provenance/v0.2",
   "subject": [
     {
-      "name": "quay.io/smileyfritz/chat-client",
+      "name": "registry.blueradish.net/user1/chat-client",
       "digest": {
         "sha256": "a1a783df5746d9eaa75decb3feb75c4fec8d4b26ccac590642c1daee3ac78fcc"
       }
