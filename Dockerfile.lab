@@ -24,7 +24,8 @@ RUN curl -O -L "https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp
     tar -xsf openshift-client-linux.tar.gz -C /usr/local/bin/ oc && \
     rm openshift-client-linux.tar.gz
 
-# Clone example pipeline
-RUN git clone https://github.com/shaneboulden/tssc-example-pipeline.git pipeline
+# Clone example pipeline and set-up dirs
+RUN git clone https://github.com/shaneboulden/tssc-example-pipeline.git pipeline \
+    && mkdir -p ~/.config/containers 
 
-CMD ["sleep","1000000"]
+CMD ["/bin/bash","-c","sleep 1000000"]

@@ -216,6 +216,11 @@ Create this file in the cluster:
 $ oc apply -f /path/to/cr.yaml
 #+end_src
 
+Create a cluster role for workshop users:
+#+begin_src bash :results silent
+$ oc create -f clusterrole.yaml
+#+end_src
+
 Additionally, for each user in our workshop we need to provision a ~Namespace~. Each namespace needs to include a helper terminal pod that workshop participants will use for each exercise.
 
 Adjust the number in the script below to the desired user count.
@@ -223,11 +228,13 @@ Adjust the number in the script below to the desired user count.
 #+begin_src bash :results silent
 for user in $(seq 1 35); do
     oc new-project user"${user}"
-    oc adm policy add-role-to-user admin user"${user}" --namespace user"${user}"
+
     oc create sa tssc --namespace user"${user}"
     oc adm policy add-scc-to-user privileged system:serviceaccount:user"${user}":tssc
     oc apply --filename deployment.yaml --namespace user"${user}"
-    oc adm policy add-cluster-role-to-user edit system:serviceaccount:user"${user}":tssc
+    oc create -f role.yaml -n user"${user}"
+    oc adm policy add-role-to-user --namespace user"${user}" --role-namespace user"${user}" workshopsa system:serviceaccount:user"${user}":tssc
+    oc adm policy add-cluster-role-to-user workshop-scc-admin system:serviceaccount:user"${user}":tssc 
 done
 #+end_src
 

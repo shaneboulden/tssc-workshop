@@ -23,6 +23,11 @@ spec:
       serviceAccount: tssc
       containers:
         - name: demo-app
-          image: quay.io/smileyfritz/tssc-terminal:v0.1.7
+          image: quay.io/smileyfritz/tssc-terminal:v0.1.10
+          env:
+          - name: "XDG_RUNTIME_DIR"
+            value: "~/.config"
+          - name: "REGISTRY_AUTH_FILE"
+            value: "~/.config/containers/auth.json"
           securityContext:
             privileged: true
