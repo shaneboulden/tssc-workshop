@@ -7,7 +7,17 @@ draft: false
 authors: ['default']
 summary: "In this first exercise we'll sign a container image using Sigstore."
 ---
-In this first exercise we'll sign a container image using Sigstore.
+In this first exercise we'll sign a container image using Sigstore. Specifically in this example, we're going to use "keyless" signing, one of the workflows supported by Sigstore.
+
+Sigstore keyless signing associates identities, rather than keys, with an artifact signature. The Sigstore 'Fulcio' service issues short-lived certificates binding an ephemeral key to an OpenID Connect identity. Signing events are logged in Rekor, a signature transparency log, providing an auditable record of when a signature was created.
+
+Sigstore’s root of trust, which includes Fulcio’s root CA certificate and Rekor’s public key, are distributed by The Update Framework (TUF). TUF is a framework to provide secure software and file updates. TUF defines a set of protocols to protect against various types of attacks.
+
+This "keyless" signing workflow provides a number of benefits:
+- There is no need for users to safely store and protect private keys used during signing. The Fulcio service destroys the private key  shortly after and the short-lived identity certificate expires. Users who wish to verify the software will use the transparency log entry, rather than relying on the signer to safely store and manage the private key.
+- The signature transparency log provides a complete audit trail of signature actions.
+
+Let's get started!
 
 ## Lab environment
 Navigate to your project and find the `tssc-terminal` container. Create a terminal session within OpenShift:
@@ -16,15 +26,6 @@ Navigate to your project and find the `tssc-terminal` container. Create a termin
 ![terminal](/static/images/terminal.png)
 </Zoom>
 
-Inside the terminal create a new directory `~/.config/containers/`
-```bash
-mkdir -p ~/.config/containers
-```
-Set a few variables to store the podman configuration:
-```bash
-export XDG_RUNTIME_DIR=~/.config
-export REGISTRY_AUTH_FILE=~/.config/containers/auth.json
-```
 Login to the registry using your lab credentials:
 ```bash
 podman login -u tssc -p $(oc whoami -t) registry.blueradish.net
@@ -44,12 +45,10 @@ podman push registry.blueradish.net/$(oc project -q)/demo-app:v1
 Firstly, grab the digest for your new image:
 ```bash
 crane digest registry.blueradish.net/$(oc project -q)/demo-app:v1
-...
-sha256:63c1117db19d56296150993c4f4eb78d54b386cbf35f4a2116b821e6b34ed53e
 ```
 Now sign the container with cosign:
 ```bash
-cosign sign registry.blueradish.net/$(oc project -q)/demo-app@<digest for your image>
+cosign sign registry.blueradish.net/$(oc project -q)/demo-app@$(crane digest registry.blueradish.net/$(oc project -q)/demo-app:v1)
 ```
 You'll be presented with a screen to authenticate  Sigstore:
 
