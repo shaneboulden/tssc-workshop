@@ -9,7 +9,7 @@ summary: "In the second exercise we'll sign a container image with Tekton Chains
 ---
 In the last exercise we signed a container image using Sigstore keyless signing services. This provides a simple way of signing container image, but it can be clunky for developers to step through each time they need to sign a new software release.
 
-[Tekton Chains](https://tekton.dev/docs/chains/) that allows you to build Sigstore signing into Tekton pipelines. Chains works by observing all TaskRuns executions in your cluster. When TaskRuns complete, Chains takes a snapshot of them. Chains then converts this snapshot to one or more standard payload formats, signs them and stores them somewhere.
+[Tekton Chains](https://tekton.dev/docs/chains/) allows you to build Sigstore signing into Tekton pipelines, and is built-in to Red Hat OpenShift Pipelines. Chains works by observing all TaskRuns executions in your cluster. When TaskRuns complete, Chains takes a snapshot of them. Chains then converts this snapshot to one or more standard payload formats, signs them and stores them somewhere.
 
 Some of the current features of Tekton Chains include:
 - Signing Tekton TaskRun results with user provided cryptographic keys, including TaskRuns themselves and OCI Images
@@ -17,7 +17,7 @@ Some of the current features of Tekton Chains include:
 - Signing with a variety of cryptographic key types and services (x509, KMS)
 - Support for multiple storage backends for signatures
 
-In this lab we'll sign a container image with Tekton Chains, push this to a container registry, and then validate the attestations created about the container image and verify the container signatures.
+In this lab we'll sign a container image with Tekton Chains and Red Hat OpenShift Pipelines, push this to a container registry, and then validate the attestations created about the container image and verify the container signatures.
 
 ## Lab environment
 Navigate to your project and find the `tssc-terminal` container. Create a terminal session within OpenShift:
@@ -26,14 +26,6 @@ Navigate to your project and find the `tssc-terminal` container. Create a termin
 ![terminal](/static/images/terminal.png)
 </Zoom>
 
-Inside the terminal create a new directory `~/.config/containers/`
-```bash
-mkdir -p ~/.config/containers
-```
-Set a few variables to store the podman configuration:
-```bash
-export XDG_RUNTIME_DIR=~/.config
-export REGISTRY_AUTH_FILE=~/.config/containers/auth.json
 ```
 Login to the registry using your lab credentials:
 ```bash

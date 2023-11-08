@@ -11,7 +11,7 @@ So far we've signed container images with Sigstore, and injected cryprtographic 
 
 In both these exercises we manually verified container signatures using the `cosign` and `rekor-cli` binaries. This is effective, but security teams need an automated way of verifying signatures. Every time a user tries to deploy a container image, we should check that it is signed by an appropriate key, and if not, block the image from the platform.
 
-Red Hat Advanced Cluster Security for Kubernetes (RHACS) provides an admission controller that supports this workflow. Once deployed to OpenShift, the RHACS admission controller verifies container images before deployment. If they are unsigned, it can block the image, or scale the deployment replicas to `0`, effectively preventing the untrusted container image running on the platform. These activities are all recorded and audited, and can be sent to security information and event management (SIEM) platforms for further investigation and correlation.
+Red Hat Advanced Cluster Security for Kubernetes (RHACS) provides an admission controller that supports this workflow. Once deployed to OpenShift, the RHACS admission controller verifies container images before deployment. If they are unsigned, it can block the image, or scale the deployment replicas to 'zero', effectively preventing the untrusted container image running on the platform. These activities are all recorded and audited, and can be sent to security information and event management (SIEM) platforms for further investigation and correlation.
 
 In this lab we'll block unsigned container images using the Red Hat Advanced Cluster Security for Kubernetes (RHACS) Cosign admission controller integration.
 
@@ -24,7 +24,7 @@ Once you're logged in, select `Platform Configuration -> Integrations`, and find
 ![acs2](/static/images/exercise3/acs2.png)
 </Zoom>
 
-Create a new Signature integration named `cosign`.
+Create a new Signature integration named `cosign - userX`, where `userX` is your workshop username.
 
 <Zoom>
 ![acs3](/static/images/exercise3/acs3.png)
