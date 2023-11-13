@@ -31,7 +31,7 @@ Login to the registry using your lab credentials:
 podman login -u tssc -p $(oc whoami -t) registry.blueradish.net
 ```
 Set the project for your username:
-```
+```bash
 oc project userX
 ```
 Copy the example image into your own quay.io account:
@@ -41,12 +41,12 @@ podman tag quay.io/smileyfritz/chat-client:latest registry.blueradish.net/$(oc p
 podman push registry.blueradish.net/$(oc project -q)/chat-client:latest
 ```
 Create a new application from the new image:
-```
+```bash
 oc new-app registry.blueradish.net/$(oc project -q)/chat-client:latest
 ```
 ## Create the pipeline secrets
 Create a secret for the registry configuration:
-```
+```bash
 oc create secret generic regcred --from-file=.dockerconfigjson=~/.config/containers/auth.json --type=kubernetes.io/dockerconfigjson
 ```
 Navigate to ACS and select `Platform configuration -> Integrations`. Scroll to the bottom of the page and find `StackRox API tokens`.
@@ -64,18 +64,18 @@ Create a token for your username. For the role, select `Continuous Integration`.
 Once complete select `Generate`.
 
 Copy the API token and create a new secret:
-```
+```bash
 oc create secret generic acstoken --from-literal=token=<your-token-here>
 ```
 
 ## Create the pipeline
 Change into the `pipeline` directory and inspect the resources:
-```
+```bash
 cd /pipeline
 ls -l
 ```
 There's a few changes that you need to make to this pipeline configuration. Firstly, open the `pipeline-run-with-scan.yaml` file with one of the available text editors (`vim` or `nano`):
-```
+```bash
 vim pipeline-run-with-scan.yaml 
 ```
 Update the following parameters:
@@ -84,19 +84,19 @@ Update the following parameters:
 * `acs-scan-api`: Update this to the route for ACS, e.g. central-acs-central.apps.vlme6l1rt1709976be.australiasoutheast.aroapp.io
 
 Once you've made these changes, create all the resources in the `pipeline/deploy` directory:
-```
+```bash
 cd pipeline
 oc create -f /pipeline/deploy/
 ```
 
 ## Run the pipeline
 Let's set a few permissions and run the pipeline:
-```
+```bash
 oc adm policy add-role-to-user isview -z pipeline-svc --role-namespace=$(oc project -q) -n $(oc project -q)
 oc adm policy add-scc-to-user privileged -z pipeline-svc
 ```
 Now start the pipeline:
-```
+```bash
 oc create -f pipeline-run-with-scan.yaml
 ```
 You should now be able to navigate to `Pipeline` in the OpenShift UI and see the pipeline running:
@@ -112,11 +112,11 @@ Once the pipeline completes Tekton Chains will automatically ensure that the ima
 Now that our container image has been signed by Tekton Chains, let's verify the signatures and artifacts created. Navigate back to the terminal window and check that you can verify the container image with `cosign`.
 
 Firstly, login to the internal registry:
-```
+```bash
 podman login -u tssc -p $(oc whoami -t) registry.blueradish.net
 ```
 Now verify the container signature:
-```
+```bash
 cosign verify --key k8s://openshift-pipelines/signing-secrets registry.blueradish.net/$(oc project -q)/chat-client:latest
 ```
 If everything ran successfully, you should see that the cosign claims are valid:
@@ -131,21 +131,23 @@ The following checks were performed on each of these signatures:
 [{"critical":{"identity":{"docker-reference":"registry.blueradish.net/user1/chat-client"},"image":{"docker-manifest-digest":"sha256:0be008b5cdaafa8b0b600f89f7524e2126c18e92f7c5b6a73aadccd2af413581"},"type":"cosign container image signature"},"optional":null}]
 ```
 You can also verify that an attestation has also been created and signed. Firstly, we need the digest of the container image that was just created:
-```
+```bash
 crane digest registry.blueradish.net/$(oc project -q)/chat-client:latest
 ```
 Now you can perform a search using the `rekor-cli` for this digest:
-```
+```bash
 export UUID=$(rekor-cli search --sha=$(crane digest registry.blueradish.net/$(oc project -q)/chat-client:latest))
 ```
 Check that you got a record from the `rekor` transparency log:
-```
+```bash
 echo $UUID
 ```
 Finally, grab the attestation that was created by Tekton Chains and take a look at the output:
-```json
+```bash
 rekor-cli get --uuid $UUID --format json | jq -r .Attestation | jq
-
+```
+You'll be able to see the attestation that Tekton Chains created during the build step of the pipeline:
+```json
 {
   "_type": "https://in-toto.io/Statement/v0.1",
   "predicateType": "https://slsa.dev/provenance/v0.2",
