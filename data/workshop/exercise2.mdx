@@ -133,17 +133,18 @@ The following checks were performed on each of these signatures:
 You can also verify that an attestation has also been created and signed. Firstly, we need the digest of the container image that was just created:
 ```
 crane digest registry.blueradish.net/$(oc project -q)/chat-client:latest
-sha256:a1a783df5746d9eaa75decb3feb75c4fec8d4b26ccac590642c1daee3ac78fcc
 ```
 Now you can perform a search using the `rekor-cli` for this digest:
 ```
-rekor-cli search --sha=sha256:a1a783df5746d9eaa75decb3feb75c4fec8d4b26ccac590642c1daee3ac78fcc
-Found matching entries (listed by UUID):
-24296fb24b8ad77a49c0d1ee06c740a6ecb6999b50d8a2133ae305d76b4f71d8a156487e54240f9d
+export UUID=$(rekor-cli search --sha=$(crane digest registry.blueradish.net/$(oc project -q)/chat-client:latest))
+```
+Check that you got a record from the `rekor` transparency log:
+```
+echo $UUID
 ```
 Finally, grab the attestation that was created by Tekton Chains and take a look at the output:
 ```json
-rekor-cli get --uuid 24296fb24b8ad77a49c0d1ee06c740a6ecb6999b50d8a2133ae305d76b4f71d8a156487e54240f9d --format json | jq -r .Attestation | jq
+rekor-cli get --uuid $UUID --format json | jq -r .Attestation | jq
 
 {
   "_type": "https://in-toto.io/Statement/v0.1",

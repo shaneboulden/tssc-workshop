@@ -23,7 +23,7 @@ spec:
       serviceAccount: tssc
       containers:
         - name: demo-app
-          image: quay.io/smileyfritz/tssc-terminal:v0.1.10
+          image: quay.io/smileyfritz/tssc-terminal:v0.1.11
           env:
           - name: "XDG_RUNTIME_DIR"
             value: "~/.config"
