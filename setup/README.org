@@ -228,14 +228,15 @@ Adjust the number in the script below to the desired user count.
 #+begin_src bash :results silent
 for user in $(seq 1 35); do
     oc new-project user"${user}"
-
     oc create sa tssc --namespace user"${user}"
     oc adm policy add-scc-to-user privileged system:serviceaccount:user"${user}":tssc
     oc apply --filename deployment.yaml --namespace user"${user}"
     oc create -f role.yaml -n user"${user}"
+    oc create -f pipelines-role.yaml -n openshift-pipelines
+    oc adm policy add-role-to-user --namespace openshift-pipelines --role-namespace openshift-pipelines pipeline-secrets-reader system:serviceaccount:user"${user}":tssc
     oc adm policy add-role-to-user --namespace user"${user}" --role-namespace user"${user}" workshopsa system:serviceaccount:user"${user}":tssc
+    oc adm policy add-cluster-role-to-user workshop-scc-admin system:serviceaccount:user"${user}":tssc
     oc adm policy add-role-to-user --namespace user"${user}" admin user"${user}"
-    oc adm policy add-cluster-role-to-user workshop-scc-admin system:serviceaccount:user"${user}":tssc 
 done
 #+end_src
 
