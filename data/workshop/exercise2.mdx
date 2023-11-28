@@ -49,7 +49,31 @@ Create a secret for the registry configuration:
 ```bash
 oc create secret generic regcred --from-file=.dockerconfigjson=~/.config/containers/auth.json --type=kubernetes.io/dockerconfigjson
 ```
-Navigate to ACS and select `Platform configuration -> Integrations`. Scroll to the bottom of the page and find `StackRox API tokens`.
+Navigate to the RHACS URL (from Etherpad) and login using your OpenShift user credentials.
+
+<Zoom>
+![acs_login1](/static/images/exercise2/acs_login1.png)
+</Zoom>
+
+<Zoom>
+![acs_login2](/static/images/exercise2/acs_login2.png)
+</Zoom>
+
+<Zoom>
+![acs_login3](/static/images/exercise2/acs_login3.png)
+</Zoom>
+
+When prompted, select `Allow selected permissions` and you will be shown the Red Hat Advanced Cluster Security for Kubernetes (RHACS) dashboard.
+
+<Zoom>
+![acs_login4](/static/images/exercise2/acs_login4.png)
+</Zoom>
+
+<Zoom>
+![acs_login5](/static/images/exercise2/acs_login5.png)
+</Zoom>
+
+Select `Platform configuration -> Integrations` from the left-hand menu. Scroll to the bottom of the page and find `StackRox API tokens`.
 
 <Zoom>
 ![api1](/static/images/exercise2/api1.png)
