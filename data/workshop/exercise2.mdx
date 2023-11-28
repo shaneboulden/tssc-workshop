@@ -189,4 +189,10 @@ You'll be able to see the attestation that Tekton Chains created during the buil
     },
     "buildType": "tekton.dev/v1beta1/TaskRun",
     ...
+  }
+}
 ```
+## Stretch goal
+Can you combine the image `build` and `scan` into a single step?
+- Take a look at the attestation created by Tekton Chains - what extra information is included?
+- What happens if the container image scan fails. Is the image still signed?
