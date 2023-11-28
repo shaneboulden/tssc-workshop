@@ -176,8 +176,27 @@ spec:
 EOF
 #+end_src
 
+* Step 3 - Install openshift pipelines operator
 
-* Step 3 - Provision users and user namespaces
+Install the OpenShift Pipelines operator for the workshop activities where participants will build pipelines via Tekton.
+
+#+begin_src bash :results silent
+cat << EOF | oc apply --filename -
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: openshift-pipelines-operator
+  namespace: openshift-operators
+spec:
+  channel: latest
+  installPlanApproval: Automatic
+  name: openshift-pipelines-operator-rh
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+#+end_src
+
+* Step 4 - Provision users and user namespaces
 
 We need to create a number of users for our workshop, which will authenticate via an [[https://docs.openshift.com/container-platform/4.13/authentication/identity_providers/configuring-htpasswd-identity-provider.html][OpenShift htpasswd auth provider]]. The example below creates a `htpasswd` file for 35 users:
 
@@ -193,21 +212,10 @@ One the users are created, you can create a secret in OpenShift holding the `htp
 oc create secret generic htpass-secret --from-file=htpasswd=users.htpasswd -n openshift-config 
 #+end_src
 
-You then need to create an identity provider:
+You then need to create an identity provider. This provider has already been created, and assumes that the `users.htpasswd` file already exists in the local directory:
 
 #+begin_src bash :results silent
-apiVersion: config.openshift.io/v1
-kind: OAuth
-metadata:
-  name: cluster
-spec:
-  identityProviders:
-  - name: workshop_users 
-    mappingMethod: claim 
-    type: HTPasswd
-    htpasswd:
-      fileData:
-        name: htpass-secret 
+$ oc creaapplyte -f idp.yaml
 #+end_src
 
 Create this file in the cluster:
@@ -238,26 +246,6 @@ for user in $(seq 1 35); do
     oc adm policy add-cluster-role-to-user workshop-scc-admin system:serviceaccount:user"${user}":tssc
     oc adm policy add-role-to-user --namespace user"${user}" admin user"${user}"
 done
-#+end_src
-
-* Step 4 - Install openshift pipelines operator
-
-Lastly let install the OpenShift Pipelines operator for the workshop activities where participants will build pipelines via Tekton.
-
-#+begin_src bash :results silent
-cat << EOF | oc apply --filename -
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: openshift-pipelines-operator
-  namespace: openshift-operators
-spec:
-  channel: latest
-  installPlanApproval: Automatic
-  name: openshift-pipelines-operator-rh
-  source: redhat-operators
-  sourceNamespace: openshift-marketplace
-EOF
 #+end_src
 
 * Step 5 - Expose the internal registry
