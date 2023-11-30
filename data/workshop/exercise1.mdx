@@ -99,7 +99,7 @@ v1
 
 ## Verifying the signature
 We can also use the `cosign` to verify container signatures. You can do this knowing the identity that was used to sign the container as well as the certificate issuer. For example, we can validate our upstream image by running:
-```bash
+```
 cosign verify --certificate-identity shane.boulden@gmail.com --certificate-oidc-issuer https://github.com/login/oauth quay.io/smileyfritz/demo-app:v0.1.1
 
 Verification for quay.io/smileyfritz/demo-app:v0.1.1 --
@@ -181,3 +181,8 @@ Certificate:
             Public Key Algorithm: id-ecPublicKey
                 Public-Key: (256 bit)
 ```
+## Stretch goals
+Let's investigate data stored in Rekor. See if you can use the `rekor-cli` commands to find out more about the image `cgr.dev/chainguard/jre:latest`:
+- Which version of `openssl-config` is used in this image?
+- How was this image signed? Was it interactively signed, or was a build system used?
+- When was this image last signed?
