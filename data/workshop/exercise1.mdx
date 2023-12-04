@@ -31,8 +31,8 @@ Login to the registry using your lab credentials:
 podman login -u tssc -p $(oc whoami -t) registry.blueradish.net
 ```
 Set the project for your username:
-```
-oc project userX
+```bash
+oc project $(oc whoami | cut -d : -f 3)
 ```
 Pull down the test app, and re-tag it using your OpenShift project:
 ```bash
