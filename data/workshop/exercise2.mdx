@@ -32,7 +32,7 @@ podman login -u tssc -p $(oc whoami -t) registry.blueradish.net
 ```
 Set the project for your username:
 ```bash
-oc project userX
+oc project $(oc whoami | cut -d : -f 3)
 ```
 Copy the example image into your own container registry account:
 ```bash
