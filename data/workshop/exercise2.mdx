@@ -184,7 +184,7 @@ You can also verify that an attestation has also been created and signed. Firstl
 ```bash
 OC_PROJECT=$(oc project -q)
 
-crane digest registry.blueradish.net/$OC_PROJECT)/chat-client:latest
+crane digest registry.blueradish.net/$OC_PROJECT/chat-client:latest
 ```
 Now you can perform a search using `rekor-cli` for this digest:
 ```bash
