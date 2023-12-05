@@ -16,7 +16,7 @@ In this lab we'll identify anomalous behaviours in container applications at run
 ## Cleanup existing policies
 Log in to ACS Central and select `Platform configuration -> Policy management`. Firstly we need to disable the policy from the last exercise. 
 
-Select the `Cosign verification - <your username>` policy. Select `Actions` and select `Disable policy`.
+Select the `Cosign verification - userX` policy. Select `Actions` and select `Disable policy`.
 
 <Zoom>
 ![runtime1](/static/images/exercise4/runtime1.png)
@@ -39,7 +39,7 @@ Select the menu next to the `Cryptocurrency Mining Process Execution` policy and
 ![runtime4](/static/images/exercise4/runtime4.png)
 </Zoom>
 
-Name the new policy `Cryptocurrency Mining Process Execution - <your username>`. Select `Next`, and under `Policy behavior` ensure that `Runtime` is selected. Change the `Response method` from `Inform` to `Inform and Enforce`, and click the switch for `Enforce on Runtime`.
+Name the new policy `Cryptocurrency Mining Process Execution - userX`. Select `Next`, and under `Policy behavior` ensure that `Runtime` is selected. Change the `Response method` from `Inform` to `Inform and Enforce`, and click the switch for `Enforce on Runtime`.
 
 <Zoom>
 ![enforce1](/static/images/exercise4/enforce1.png)
@@ -112,7 +112,7 @@ If you select `Events` for the deployment you will see the reason - this contain
 ![events1](/static/images/exercise4/events1.png)
 </Zoom>
 
-Navigate back to ACS and select `Violations`. You should see a policy violation for `Cryptocurrency Mining Process Execution - <your username>`.
+Navigate back to ACS and select `Violations`. You should see a policy violation for `Cryptocurrency Mining Process Execution - userX`.
 
 <Zoom>
 ![violation1](/static/images/exercise4/violation1.png)
@@ -131,7 +131,7 @@ If you select `Enforcement` you can see the action that was taken. In this case,
 </Zoom>
 
 ## Cleanup
-Navigate back to OpenShift and your username. Delete the `demo-app` deployment in your namespace.
+Navigate back to OpenShift and your user project. Delete the `demo-app` deployment in your namespace.
 
 <Zoom>
 ![delete1](/static/images/exercise4/delete1.png)

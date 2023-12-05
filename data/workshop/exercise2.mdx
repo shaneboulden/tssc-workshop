@@ -32,22 +32,36 @@ podman login -u tssc -p $(oc whoami -t) registry.blueradish.net
 ```
 Set the project for your username:
 ```bash
-oc project $(oc whoami | cut -d : -f 3)
+oc project userX
 ```
-Copy the example image into your own quay.io account:
+Copy the example image into your own container registry account:
 ```bash
-podman pull quay.io/smileyfritz/chat-client:latest
-podman tag quay.io/smileyfritz/chat-client:latest registry.blueradish.net/$(oc project -q)/chat-client:latest
-podman push registry.blueradish.net/$(oc project -q)/chat-client:latest
+OC_PROJECT=$(oc project -q)
+
+podman pull \
+  quay.io/smileyfritz/chat-client:latest
+
+podman tag \
+  quay.io/smileyfritz/chat-client:latest \
+  registry.blueradish.net/$OC_PROJECT/chat-client:latest
+
+podman push \
+  registry.blueradish.net/$OC_PROJECT/chat-client:latest
 ```
+
 Create a new application from the new image:
 ```bash
-oc new-app registry.blueradish.net/$(oc project -q)/chat-client:latest
+OC_PROJECT=$(oc project -q)
+
+oc new-app \
+  registry.blueradish.net/$OC_PROJECT/chat-client:latest
 ```
 ## Create the pipeline secrets
 Create a secret for the registry configuration:
 ```bash
-oc create secret generic regcred --from-file=.dockerconfigjson=~/.config/containers/auth.json --type=kubernetes.io/dockerconfigjson
+oc create secret generic regcred \
+  --from-file=.dockerconfigjson=~/.config/containers/auth.json \
+  --type=kubernetes.io/dockerconfigjson
 ```
 Navigate to the RHACS URL (from Etherpad) and login using your OpenShift user credentials.
 
@@ -89,7 +103,8 @@ Once complete select `Generate`.
 
 Copy the API token and create a new secret:
 ```bash
-oc create secret generic acstoken --from-literal=token=<your-token-here>
+oc create secret generic acstoken \
+  --from-literal=token=<your-token-here>
 ```
 
 ## Create the pipeline
@@ -116,8 +131,15 @@ oc create -f /pipeline/deploy/
 ## Run the pipeline
 Let's set a few permissions and run the pipeline:
 ```bash
-oc adm policy add-role-to-user isview -z pipeline-svc --role-namespace=$(oc project -q) -n $(oc project -q)
-oc adm policy add-scc-to-user privileged -z pipeline-svc
+OC_PROJECT=$(oc project -q) 
+
+oc adm policy add-role-to-user isview \
+  -z pipeline-svc \
+  --role-namespace=$OC_PROJECT \
+  -n $OC_PROJECT
+
+oc adm policy add-scc-to-user privileged \
+  -z pipeline-svc
 ```
 Now start the pipeline:
 ```bash
@@ -141,7 +163,11 @@ podman login -u tssc -p $(oc whoami -t) registry.blueradish.net
 ```
 Now verify the container signature:
 ```bash
-cosign verify --key k8s://openshift-pipelines/signing-secrets registry.blueradish.net/$(oc project -q)/chat-client:latest
+OC_PROJECT=$(oc project -q)
+
+cosign verify \
+  --key k8s://openshift-pipelines/signing-secrets \
+  registry.blueradish.net/$OC_PROJECT/chat-client:latest
 ```
 If everything ran successfully, you should see that the cosign claims are valid:
 ```
@@ -156,11 +182,19 @@ The following checks were performed on each of these signatures:
 ```
 You can also verify that an attestation has also been created and signed. Firstly, we need the digest of the container image that was just created:
 ```bash
-crane digest registry.blueradish.net/$(oc project -q)/chat-client:latest
+OC_PROJECT=$(oc project -q)
+
+crane digest registry.blueradish.net/$OC_PROJECT)/chat-client:latest
 ```
-Now you can perform a search using the `rekor-cli` for this digest:
+Now you can perform a search using `rekor-cli` for this digest:
 ```bash
-export UUID=$(rekor-cli search --sha=$(crane digest registry.blueradish.net/$(oc project -q)/chat-client:latest))
+OC_PROJECT=$(oc project -q)
+
+# Generate the SHA digest of the 'latest' version of the container image
+IMAGE_SHA=$(crane digest registry.blueradish.net/$OC_PROJECT/chat-client:latest)
+
+# Search Rekor for UUID using the SHA digest and set it as an environment variable
+export UUID=$(rekor-cli search --sha=$IMAGE_SHA)
 ```
 Check that you got a record from the `rekor` transparency log:
 ```bash
