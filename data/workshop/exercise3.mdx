@@ -9,7 +9,7 @@ summary: "In the third exercise we'll block unsigned containers from OpenShift"
 ---
 So far we've signed container images with Sigstore, and injected cryprtographic signing and attestation build pipelines on OpenShift with Tekton Chains.
 
-In both these exercises we manually verified container signatures using the `cosign` and `rekor-cli` binaries. This is effective, but security teams need an automated way of verifying signatures. Every time a user tries to deploy a container image, we should check that it is signed by an appropriate key, and if not, block the image from the platform.
+In both these exercises we manually verified container signatures using `cosign` and `rekor-cli`. This is effective, but security teams need an automated way of verifying signatures. Every time a user tries to deploy a container image, we should check that it is signed by an appropriate key, and if not, block the image from the platform.
 
 Red Hat Advanced Cluster Security for Kubernetes (RHACS) provides an admission controller that supports this workflow. Once deployed to OpenShift, the RHACS admission controller verifies container images before deployment. If they are unsigned, it can block the image, or scale the deployment replicas to 'zero', effectively preventing the untrusted container image running on the platform. These activities are all recorded and audited, and can be sent to security information and event management (SIEM) platforms for further investigation and correlation.
 
@@ -30,9 +30,11 @@ Create a new Signature integration named `cosign - userX`, where `userX` is your
 ![acs3](/static/images/exercise3/acs3.png)
 </Zoom>
 
-Collect the public key from OpenShift and add it to the Cosign integration
-```
-oc get secret signing-secrets -n openshift-pipelines -o jsonpath='{.data.cosign\.pub}' | base64 --decode
+Collect the public key from OpenShift and add it to the Cosign integration.
+```bash
+oc get secret signing-secrets \
+  -n openshift-pipelines \
+  -o jsonpath='{.data.cosign\.pub}' | base64 --decode
 ```
 <Zoom>
 ![acs4](/static/images/exercise3/acs4.png)
@@ -47,7 +49,7 @@ Select `Platform Configuration -> Policy Management`. Select `Create Policy` to 
 ![acs5](/static/images/exercise3/acs5.png)
 </Zoom>
 
-Name the new policy `Cosign verification - <your username>`. Give it a severity of `Medium`, and select `Kubernetes` from the Categories. You don't need to add anything for the description, rationale or guidance, but you can complete these sections if you'd like.
+Name the new policy `Cosign verification - userX`. Give it a severity of `Medium`, and select `Kubernetes` from the Categories. You don't need to add anything for the description, rationale or guidance, but you can complete these sections if you'd like.
 
 <Zoom>
 ![acs6](/static/images/exercise3/acs6.png)
@@ -75,7 +77,7 @@ Click the `Select` button in the policy and select the Cosign integration that y
 ![acs9](/static/images/exercise3/acs9.png)
 </Zoom>
 
-Select `Next` and under `Restrict by scope` select `Add Inclusion Scope`. Select the available cluster, and enter your user project for the namespace. e.g. if you are user1, enter `user1`.
+Select `Next` and under `Restrict by scope` select `Add Inclusion Scope`. Select the available cluster, and enter your user project for the namespace. e.g. _userX_.
 
 <Zoom>
 ![acs10](/static/images/exercise3/acs10.png)
@@ -88,7 +90,7 @@ Select `Next`. Review the policy and select `Save`.
 </Zoom>
 
 ## Test out the policy
-Navigate back to OpenShift and your project (e.g. `user1`). Click the `+` button (shown in yellow) to create a new deployment.
+Navigate back to OpenShift and your project (e.g. _userX_). Click the `+` button (shown in yellow) to create a new deployment.
 
 <Zoom>
 ![ocp1](/static/images/exercise3/ocp1.png)
@@ -130,7 +132,7 @@ Verify that the ACS policy has blocked the new deployment.
 ![ocp3](/static/images/exercise3/ocp3.png)
 </Zoom>
 
-Navigate back to ACS and select `Violations`. Verify that you can now see a new violation has been created for the `Cosign verification - <your username>` policy.
+Navigate back to ACS and select `Violations`. Verify that you can now see a new violation has been created for the `Cosign verification - userX` policy.
 
 <Zoom>
 ![ocp4](/static/images/exercise3/ocp4.png)
