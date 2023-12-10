@@ -198,7 +198,7 @@ EOF
 
 * Step 4 - Provision users and user namespaces
 
-We need to create a number of users for our workshop, which will authenticate via an [[https://docs.openshift.com/container-platform/4.13/authentication/identity_providers/configuring-htpasswd-identity-provider.html][OpenShift htpasswd auth provider]]. The example below creates a `htpasswd` file for 35 users:
+We need to create a number of users for our workshop, which will authenticate via an [[https://docs.openshift.com/container-platform/4.14/authentication/identity_providers/configuring-htpasswd-identity-provider.html][OpenShift htpasswd auth provider]]. The example below creates a `htpasswd` file for 35 users:
 
 #+begin_src bash :results silent
 PASSWORD=ghye4311
@@ -215,13 +215,7 @@ oc create secret generic htpass-secret --from-file=htpasswd=users.htpasswd -n op
 You then need to create an identity provider. This provider has already been created, and assumes that the `users.htpasswd` file already exists in the local directory:
 
 #+begin_src bash :results silent
-$ oc creaapplyte -f idp.yaml
-#+end_src
-
-Create this file in the cluster:
-
-#+begin_src bash :results silent
-$ oc apply -f /path/to/cr.yaml
+$ oc apply -f idp.yaml
 #+end_src
 
 Create a cluster role for workshop users:
